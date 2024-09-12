@@ -7,6 +7,8 @@ async function giveawayRun(interaction, options) {
   const giveawayDescription = options.getString('description') || 'Nenhuma descrição foi fornecida ( ͡° ͜ʖ ͡°)';
   const giveawayDuration = options.getString('duration');
   const giveawayHost = options.getUser('host') || interaction.user;
+  const specialRole = options.getRole('special_role');
+  const specialRoleEntries = options.getInteger('entries');
 
   const currentTime = Math.floor(Date.now() / 1000);
 
@@ -43,72 +45,78 @@ async function giveawayRun(interaction, options) {
     embed.setImage(imageUrl);
   } // Só colocar a imagem se o usuário colocar uma imagem
 
-  // Criar o botão pra entrar no sorteio
-  const button = new ButtonBuilder()
+  // Criar os botões
+  const joinButton = new ButtonBuilder()
     .setCustomId('joinGiveaway')
     .setLabel('🎉 Entrar 🎊')
     .setStyle(ButtonStyle.Success); // Botão verde
 
-  const row = new ActionRowBuilder().addComponents(button);
+  const participantsButton = new ButtonBuilder()
+    .setCustomId('participants')
+    .setLabel('🧑 Participantes')
+    .setStyle(ButtonStyle.Secondary); // Botão cinza
 
-  const message = await interaction.reply({ embeds: [embed], components: [row] }); // Enviar o embed com o botão
+  const row = new ActionRowBuilder().addComponents(joinButton, participantsButton);
+
+  const message = await interaction.reply({ embeds: [embed], components: [row] }); // Enviar o embed com os botões
+
+  // Carregar o JSON
+  let participantsData = {};
+  const filePath = './giveaway_participants.json';
+  if (fs.existsSync(filePath)) {
+    participantsData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  }
 
   // Listener para o botão
-  const filter = (i) => i.customId === 'joinGiveaway';
+  const filter = (i) => i.customId === 'joinGiveaway' || i.customId === 'participants';
   const collector = message.createMessageComponentCollector({ filter, time: durationInSeconds * 1000 });
 
   collector.on('collect', async (i) => {
     const participant = i.user;
     const giveawayId = message.id;
 
-    // Carregar o JSON
-    let participantsData = {};
-    const filePath = './giveaway_participants.json';
-    if (fs.existsSync(filePath)) {
-      participantsData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (i.customId === 'joinGiveaway') {
+      // Criar entrada para o sorteio, se ainda não existir
+      if (!participantsData[giveawayId]) {
+        participantsData[giveawayId] = {
+          title: giveawayTitle,
+          participants: []
+        };
+      }
+
+      // Verificar se o participante já tá no sorteio
+      if (!participantsData[giveawayId].participants.includes(participant.id)) {
+        participantsData[giveawayId].participants.push(participant.id); // Adicionar o participante
+        fs.writeFileSync(filePath, JSON.stringify(participantsData, null, 2)); // Salvar o JSON
+
+        await i.reply({ content: 'Você entrou no sorteio com sucesso!', ephemeral: true }); // Responder ao usuário
+      } else {
+        participantsData[giveawayId].participants = participantsData[giveawayId].participants.filter(id => id !== participant.id); // Remover o participante
+        fs.writeFileSync(filePath, JSON.stringify(participantsData, null, 2)); // Salvar o JSON
+
+        await i.reply({ content: 'Você saiu do sorteio!', ephemeral: true });
+      }
+    } else if (i.customId === 'participants') {
+      const isGiveawayEnded = currentTime >= endTime;
+      const participants = participantsData[giveawayId]?.participants || [];
+
+      const participantsList = participants.map(id => `<@${id}>`).join('\n') || 'Nenhum participante ainda.';
+
+      const messageContent = isGiveawayEnded
+        ? `Este sorteio acabou, mas pouco antes dele acabar, os participantes eram:\n${participantsList}`
+        : `Os participantes do sorteio são:\n${participantsList}`;
+
+      await i.reply({ content: messageContent, ephemeral: true }); // Responder ao usuário
     }
-
-    // Criar entrada para o sorteio, se ainda não existir
-    if (!participantsData[giveawayId]) {
-      participantsData[giveawayId] = {
-        title: giveawayTitle,
-        participants: []
-      };
-    }
-
-    const participantIndex = participantsData[giveawayId].participants.indexOf(participant.id);
-
-    // Verificar se o participante já tá no sorteio
-    if (participantIndex === -1) {
-      participantsData[giveawayId].participants.push(participant.id); // Adicionar o participante
-      await i.reply({ content: 'Você entrou no sorteio com sucesso!', ephemeral: true }); // Responder ao usuário
-    } else {
-      participantsData[giveawayId].participants.splice(participantIndex, 1); // Remover o participante
-      await i.reply({ content: 'Você saiu do sorteio!', ephemeral: true });
-    }
-
-    // Salvar o JSON
-    fs.writeFileSync(filePath, JSON.stringify(participantsData, null, 2)); // Salvar o JSON
   });
 
-  // Sortear o vencedor quando o sorteio terminar
   collector.on('end', async () => {
-    const filePath = './giveaway_participants.json';
-    if (fs.existsSync(filePath)) {
-      const participantsData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    // Notificar que o sorteio terminou
+    const giveawayId = message.id;
+    const participants = participantsData[giveawayId]?.participants || [];
+    const winner = participants[Math.floor(Math.random() * participants.length)];
 
-      // Verificar se existem participantes
-      const participants = participantsData[giveawayId]?.participants || [];
-      if (participants.length > 0) {
-        const winnerId = participants[Math.floor(Math.random() * participants.length)]; // Escolher um vencedor
-        const winner = await interaction.client.users.fetch(winnerId); // Buscar o usuário pelo ID
-
-        // Anunciar o vencedor publicamente
-        await interaction.channel.send(`🎉 O sorteio **${giveawayTitle}** acabou! O vencedor é ${winner}. Parabéns! 🎉`);
-      } else {
-        await interaction.channel.send(`O sorteio **${giveawayTitle}** acabou, mas ninguém participou.`);
-      }
-    }
+    await interaction.followUp({ content: `O sorteio terminou! O vencedor foi ${winner ? `<@${winner}>` : 'ninguém!'} - ${giveawayTitle}`, ephemeral: false });
   });
 }
 

@@ -1,5 +1,5 @@
 const express = require('express');
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
@@ -29,8 +29,16 @@ const rest = new REST({ version: "10" }).setToken(token);
 
 client.on("ready", async () => {
   console.log(`Olá! Eu tô online!`);
-  client.user.setActivity("falar de que você recebe ajuda ao executar /ajuda", {
-    type: "LISTENING",
+
+  // Atualizar a presença do bot
+  client.user.setPresence({
+    activities: [
+      {
+        name: `eu mesmo operar em mais de ${client.guilds.cache.size} servidores! Valeu gente! 🎉`,
+        type: ActivityType.Watching,
+      }
+    ],
+    status: 'online',
   });
 
   const commands = [
