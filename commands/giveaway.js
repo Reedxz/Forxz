@@ -76,20 +76,39 @@ async function giveawayRun(interaction, options) {
       };
     }
 
-    // Verificar se o participante já tá no sorteio
-    if (!participantsData[giveawayId].participants.includes(participant.id)) {
-      participantsData[giveawayId].participants.push(participant.id); // Adicionar o participante
-      fs.writeFileSync(filePath, JSON.stringify(participantsData, null, 2)); // Salvar o JSON
+    const participantIndex = participantsData[giveawayId].participants.indexOf(participant.id);
 
+    // Verificar se o participante já tá no sorteio
+    if (participantIndex === -1) {
+      participantsData[giveawayId].participants.push(participant.id); // Adicionar o participante
       await i.reply({ content: 'Você entrou no sorteio com sucesso!', ephemeral: true }); // Responder ao usuário
     } else {
+      participantsData[giveawayId].participants.splice(participantIndex, 1); // Remover o participante
       await i.reply({ content: 'Você saiu do sorteio!', ephemeral: true });
     }
+
+    // Salvar o JSON
+    fs.writeFileSync(filePath, JSON.stringify(participantsData, null, 2)); // Salvar o JSON
   });
 
+  // Sortear o vencedor quando o sorteio terminar
   collector.on('end', async () => {
-    // Notificar que o sorteio terminou
-    await interaction.followUp({ content: 'O sorteio terminou!', ephemeral: true });
+    const filePath = './giveaway_participants.json';
+    if (fs.existsSync(filePath)) {
+      const participantsData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+      // Verificar se existem participantes
+      const participants = participantsData[giveawayId]?.participants || [];
+      if (participants.length > 0) {
+        const winnerId = participants[Math.floor(Math.random() * participants.length)]; // Escolher um vencedor
+        const winner = await interaction.client.users.fetch(winnerId); // Buscar o usuário pelo ID
+
+        // Anunciar o vencedor publicamente
+        await interaction.channel.send(`🎉 O sorteio **${giveawayTitle}** acabou! O vencedor é ${winner}. Parabéns! 🎉`);
+      } else {
+        await interaction.channel.send(`O sorteio **${giveawayTitle}** acabou, mas ninguém participou.`);
+      }
+    }
   });
 }
 
