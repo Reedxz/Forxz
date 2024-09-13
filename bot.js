@@ -4,6 +4,7 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const { giveawayRun } = require('./commands/giveaway.js');
+const { rerollGiveaway } = require('./commands/reroll.js');
 
 const app = express();
 const clientId = process.env.clientId;
@@ -50,45 +51,57 @@ client.on("ready", async () => {
           name: "duration",
           description: "Qual é a duração do sorteio? (1m, 1h, 1d)",
           type: 3,
-          required: true
+          required: true,
         },
         {
           name: "prize",
           description: "O prêmio do sorteio.",
           type: 3,
-          required: true
+          required: true,
         },
         {
           name: "host",
-          description: "Qual pessoa é a host do sorteio?.",
+          description: "Qual pessoa é a host do sorteio?",
           type: 6,
-          required: false
+          required: false,
         },
         {
           name: "special_role",
           description: "Qual é o cargo especial que terá mais entradas?",
           type: 8,
-          required: false
+          required: false,
         },
         {
           name: "entries",
           description: "Quantas entradas você quer para o cargo especial?",
           type: 4,
-          required: false
+          required: false,
         },
         {
           name: "image",
           description: "A imagem que vai aparecer no sorteio.",
           type: 11,
-          required: false
+          required: false,
         },
         {
           name: "description",
           description: "A descrição do sorteio.",
           type: 3,
-          required: false
-        }
-      ]
+          required: false,
+        },
+      ],
+    },
+    {
+      name: "reroll",
+      description: "Decida um novo vencedor para um sorteio existente.",
+      options: [
+        {
+          name: "giveaway_id",
+          description: "Qual é o ID da mensagem do sorteio?",
+          type: 3,
+          required: true,
+        },
+      ],
     },
   ];
 
@@ -112,9 +125,12 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "giveaway":
-      giveawayRun(interaction, options)
+      await giveawayRun(interaction, options);
+      break;
+    case "reroll":
+      await rerollGiveaway(interaction, options);
       break;
   }
 });
 
-client.login(token)
+client.login(token);
