@@ -38,7 +38,7 @@ client.on("ready", async () => {
   client.user.setPresence({
     activities: [
       {
-        name:  `Jujutsu Kaisen`,
+        name:  `Jujutsu Kaisen com ${client.guilds.cache.size}`,
         type: ActivityType.Watching,
       },
     ],
