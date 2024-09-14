@@ -38,7 +38,7 @@ client.on("ready", async () => {
   client.user.setPresence({
     activities: [
       {
-        name: `Assistindo Jujutsu Kaisen`,
+        name:  `Jujutsu Kaisen`,
         type: ActivityType.Watching,
       },
     ],
