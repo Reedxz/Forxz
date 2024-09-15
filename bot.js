@@ -38,7 +38,7 @@ client.on("ready", async () => {
   client.user.setPresence({
     activities: [
       {
-        name:  `Jujutsu Kaisen com ${client.guilds.cache.size}`,
+        name:  `Jujutsu Kaisen com ${client.guilds.cache.size} pessoas!`, // Nah, i'd win
         type: ActivityType.Watching,
       },
     ],
@@ -109,6 +109,37 @@ client.on("ready", async () => {
               description: "ID da mensagem do sorteio.",
               type: 3,
               required: true,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: "resposta",
+      description: "Isto é o começo de um subcomando.",
+      options: [
+        {
+          name: "automática",
+          type: 1,
+          options: [
+            {
+              name: "criar",
+              description: "Crie uma resposta automática.",
+              type: 1,
+              options: [
+                {
+                  name: "mensagem",
+                  description: "A mensagem a qual o bot vai responder.",
+                  type: 3,
+                  required: true,
+                },
+                {
+                  name: "resposta",
+                  description: "A resposta do bot.",
+                  type: 3,
+                  required: true,
+                },
+              ],
             },
           ],
         },

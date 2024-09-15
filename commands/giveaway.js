@@ -64,7 +64,7 @@ async function giveawayRun(interaction, options) {
     if (specialRole && specialRoleEntries) {
       description += `\n\n<@&${specialRole.id}> tem ${specialRoleEntries}X mais chance de ganhar!`;
     }
-
+    
     let embed = new EmbedBuilder({
       "title": `**${giveawayTitle}**`,
       "description": description,
