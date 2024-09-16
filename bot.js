@@ -4,6 +4,7 @@ const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
 const fs = require("fs");
 const { giveawayRun } = require("./commands/giveaway.js");
+const { autoresposta } = require("./commands/autoresposta.js");
 
 const app = express();
 const clientId = process.env.clientId;
@@ -115,31 +116,44 @@ client.on("ready", async () => {
       ],
     },
     {
-      name: "resposta",
+      name: "autoresposta",
       description: "Isto é o começo de um subcomando.",
       options: [
         {
-          name: "automática",
+          name: "criar",
+          description: "Crie uma resposta automática.",
           type: 1,
           options: [
             {
-              name: "criar",
-              description: "Crie uma resposta automática.",
-              type: 1,
-              options: [
-                {
-                  name: "mensagem",
-                  description: "A mensagem a qual o bot vai responder.",
-                  type: 3,
-                  required: true,
-                },
-                {
-                  name: "resposta",
-                  description: "A resposta do bot.",
-                  type: 3,
-                  required: true,
-                },
-              ],
+              name: "mensagem",
+              description: "A mensagem à qual será respondida.",
+              type: 3,
+              required: true,
+            },
+            {
+              name: "resposta",
+              description: "A resposta que o bot vai dar.",
+              type: 3,
+              required: true,
+            },
+          ],
+        },
+        {
+          name: "começo",
+          description: "Crie uma resposta automática que ativa só de uma mensagem começar por ela.",
+          type: 1,
+          options: [
+            {
+              name: "mensagem",
+              description: "A mensagem à qual será respondida.",
+              type: 3,
+              required: true,
+            },
+            {
+              name: "resposta",
+              description: "A resposta que o bot vai dar.",
+              type: 3,
+              required: true,
             },
           ],
         },
@@ -167,6 +181,10 @@ client.on("interactionCreate", async (interaction) => {
   switch (commandName) {
     case "giveaway":
       giveawayRun(interaction, options);
+      break;
+    case "autoresposta":
+      autoresposta(interaction, options);
+      break;
   }
 });
 

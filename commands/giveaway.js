@@ -19,7 +19,7 @@ async function giveawayRun(interaction, options) {
 
   // Lidar com o reroll
   if (options.getSubcommand() === 'reroll') {
-    const giveawayId = options.getString('giveaway_id');  // Usar giveaway_id em vez de message_id
+    const giveawayId = options.getString('giveaway_id');
 
     // Carregar os dados dos participantes do sorteio
     if (!fs.existsSync(filePath)) {
@@ -29,9 +29,9 @@ async function giveawayRun(interaction, options) {
     const participantsData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
     // Obter participantes para o giveaway_id específico
-    const participants = participantsData[giveawayId]?.participants || [];
+    const participantsReal = participantsData[giveawayId]?.participants || [];
 
-    if (participants.length === 0) {
+    if (participantsReal.length === 0) {
       return interaction.reply({ content: 'Nenhum participante para rerolar.', ephemeral: true });
     }
 
